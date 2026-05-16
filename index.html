@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bar Study — Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300;1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0906;
+    --surface: #181210;
+    --card-front: #1e1710;
+    --card-back: #0f1a12;
+    --gold: #c8933a;
+    --gold-dim: #7a5820;
+    --cream: #ede0c8;
+    --muted: #6b5c45;
+    --green: #4e8c5f;
+    --red: #8c4040;
+    --border: #2e2318;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 60px;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, #241806 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 100%, #0a1208 0%, transparent 55%);
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 7vw, 3rem);
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+
+  .logo span {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--cream);
+    opacity: 0.6;
+    font-size: 0.55em;
+    display: block;
+    letter-spacing: 0.25em;
+    margin-top: 4px;
+  }
+
+  /* PROGRESS */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .progress-bar-wrap {
+    width: clamp(180px, 50vw, 320px);
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.4s ease;
+    border-radius: 2px;
+  }
+
+  .progress-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+
+  /* CATEGORY BADGE */
+  .category-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    background: rgba(200,147,58,0.1);
+    border: 1px solid var(--gold-dim);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    animation: fadeUp 0.5s 0.15s ease both;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* CARD SCENE */
+  .scene {
+    width: min(460px, 92vw);
+    height: 280px;
+    perspective: 1000px;
+    cursor: pointer;
+    animation: fadeUp 0.6s 0.2s ease both;
+    margin-bottom: 28px;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 28px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    text-align: center;
+  }
+
+  .card-front {
+    background: var(--card-front);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(200,147,58,0.08);
+  }
+
+  .card-back {
+    background: var(--card-back);
+    border: 1px solid #1a2e1e;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(78,140,95,0.1);
+    transform: rotateY(180deg);
+  }
+
+  .card-hint {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .card-term {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.2;
+  }
+
+  .card-definition {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1rem, 3.5vw, 1.25rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.55;
+    opacity: 0.92;
+  }
+
+  .card-back .card-hint {
+    color: #3a6b48;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s 0.3s ease both;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-know {
+    background: rgba(78,140,95,0.12);
+    border-color: #2e5c3a;
+    color: #6bbf85;
+  }
+  .btn-know:hover { background: rgba(78,140,95,0.25); }
+
+  .btn-again {
+    background: rgba(140,64,64,0.12);
+    border-color: #5c2e2e;
+    color: #bf7070;
+  }
+  .btn-again:hover { background: rgba(140,64,64,0.25); }
+
+  .btn-flip {
+    background: rgba(200,147,58,0.1);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+  .btn-flip:hover { background: rgba(200,147,58,0.2); }
+
+  .btn-shuffle {
+    background: rgba(255,255,255,0.04);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .btn-shuffle:hover { color: var(--cream); border-color: var(--muted); }
+
+  /* SCORE ROW */
+  .score-row {
+    display: flex;
+    gap: 24px;
+    animation: fadeUp 0.6s 0.35s ease both;
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .score-know .score-num { color: #6bbf85; }
+  .score-again .score-num { color: #bf7070; }
+  .score-left .score-num { color: var(--gold); }
+
+  .score-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  /* COMPLETE STATE */
+  .complete {
+    text-align: center;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .complete h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .complete p {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+
+  .complete .final-score {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 24px;
+    opacity: 0.8;
+  }
+
+  .btn-restart {
+    background: rgba(200,147,58,0.12);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    font-size: 0.7rem;
+    padding: 12px 28px;
+  }
+  .btn-restart:hover { background: rgba(200,147,58,0.25); }
+
+  /* DECORATION */
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--gold-dim);
+    opacity: 0.4;
+    margin: 10px auto 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cardPop {
+    0% { transform: scale(0.96); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .scene { animation: fadeUp 0.6s 0.2s ease both; }
+
+  .swipe-hint {
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    opacity: 0.6;
+    margin-top: 10px;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Bar Study<span>flashcards</span></div>
+</header>
+
+<div class="progress-row">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">0 / 30</div>
+</div>
+
+<div class="category-badge" id="categoryBadge">—</div>
+
+<div class="scene" id="scene" onclick="flipCard()">
+  <div class="card" id="card">
+    <div class="card-face card-front">
+      <div class="card-hint">tap to reveal</div>
+      <div class="card-term" id="cardTerm">Loading...</div>
+    </div>
+    <div class="card-face card-back">
+      <div class="card-hint">answer</div>
+      <div class="card-definition" id="cardDef">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="swipe-hint">tap card to flip &nbsp;·&nbsp; use buttons to track progress</div>
+
+<div class="controls" id="controls">
+  <button class="btn-again" onclick="markCard(false)">✗ &nbsp;Again</button>
+  <button class="btn-flip" onclick="flipCard()">↺ &nbsp;Flip</button>
+  <button class="btn-know" onclick="markCard(true)">✓ &nbsp;Know it</button>
+</div>
+
+<div style="display:flex;gap:16px;margin-bottom:14px;">
+  <button class="btn-shuffle" onclick="shuffleAll()">⇄ Shuffle</button>
+  <button class="btn-shuffle" onclick="resetAll()">↺ Reset</button>
+</div>
+
+<div class="score-row">
+  <div class="score-item score-know">
+    <div class="score-num" id="scoreKnow">0</div>
+    <div class="score-label">Know It</div>
+  </div>
+  <div class="score-item score-again">
+    <div class="score-num" id="scoreAgain">0</div>
+    <div class="score-label">Again</div>
+  </div>
+  <div class="score-item score-left">
+    <div class="score-num" id="scoreLeft">30</div>
+    <div class="score-label">Left</div>
+  </div>
+</div>
+
+<div class="complete" id="completeScreen" style="display:none;">
+  <h2>Nice work! 🍸</h2>
+  <div class="divider"></div>
+  <div class="final-score" id="finalScore"></div>
+  <p>Ready to serve</p>
+  <button class="btn-restart" onclick="restartWrong()">Practice missed cards</button>
+  <br><br>
+  <button class="btn-restart" onclick="resetAll()">Start over</button>
+</div>
+
+<script>
+const ALL_CARDS = [
+  { category: "Liqueurs", term: "Licor 43", def: "A Spanish liqueur with botanical, citrus, and vanilla notes." },
+  { category: "Basics", term: "Liquor vs Liqueur", def: "Liquor = higher ABV spirit. Liqueur = sweetened, flavored spirit with lower ABV and added sugar." },
+  { category: "Aperitifs", term: "Campari", def: "An Italian aperitif — more bitter than Aperol with a higher alcohol content." },
+  { category: "Wine & Sherry", term: "Fino Sherry", def: "Pale straw color, bread-like taste, drier than a typical sherry." },
+  { category: "Bitters", term: "Cynar", def: "Artichoke bitters." },
+  { category: "Bitters", term: "What are Bitters?", def: "Highly concentrated alcohols with varying flavor extracts." },
+  { category: "Syrups", term: "Orgeat", def: "A syrup that tastes of orange flower and almonds." },
+  { category: "Liqueurs", term: "Ancho Reyes", def: "A liqueur made from sun-dried ancho chiles." },
+  { category: "Bitters", term: "Fire Bitters", def: "A habanero bitter that adds heat without altering the flavor profile." },
+  { category: "Wine", term: "Tempranillo", def: "A Spanish red wine with high tannins and bright fruit like cherry." },
+  { category: "Bitters", term: "Angostura", def: "A bitter with cinnamon and clove aromatics." },
+  { category: "Bitters", term: "Fernet Menta", def: "Italian mint bitters." },
+  { category: "Liqueurs", term: "Baileys", def: "A blend of cream and Irish whisky." },
+  { category: "Coffee Liqueurs", term: "Kahlua", def: "An intense dark coffee liqueur made from rum and Arabica coffee." },
+  { category: "Liqueurs", term: "Triple Sec", def: "An orange-flavored sweet liqueur." },
+  { category: "Rum", term: "151 Rum", def: "Known for its high proof and therefore its high flammability." },
+  { category: "Ingredients", term: "Bergamot", def: "A citrus fruit known for its aromatic oil." },
+  { category: "Gin", term: "Tanqueray", def: "A brand of gin." },
+  { category: "Agave", term: "Mezcal vs Tequila", def: "Both are Mexican agave spirits. Mezcal is smoky from underground roasting; tequila uses steam-cooked Blue Weber agave for a cleaner taste. All tequila is mezcal, but not all mezcal is tequila." },
+  { category: "Liqueurs", term: "St. Germaine", def: "An elderflower liqueur." },
+  { category: "Liqueurs", term: "Crème de Violette", def: "A violet liqueur used to add floral notes and color to cocktails." },
+  { category: "Coffee Liqueurs", term: "Coffee Liqueurs", def: "Sweetened spirits flavored with coffee beans, ranging from sweet and syrupy to dry and intensely aromatic." },
+  { category: "Non-Alcoholic", term: "Seedlip Grove 42", def: "A 0.0% ABV non-alcoholic spirit blending Mediterranean orange, blood orange, mandarin, lemon, ginger, and Japanese sansho pepper." },
+  { category: "Non-Alcoholic", term: "Pathfinder", def: "A hemp-based non-alcoholic spirit (no THC/CBD) made from wormwood, angelica root, saffron, ginger, sage, orange peel, and wild-crafted Douglas fir. Earthy, bittersweet, crisp, and warm." },
+  { category: "Syrups", term: "Demerara", def: "Brown cane sugar, often used as a sweetener in cocktails." },
+];
+
+let deck = [];
+let current = 0;
+let knowCount = 0;
+let againCount = 0;
+let isFlipped = false;
+let missedCards = [];
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function init(cards) {
+  deck = [...cards];
+  current = 0;
+  knowCount = 0;
+  againCount = 0;
+  missedCards = [];
+  isFlipped = false;
+  document.getElementById('completeScreen').style.display = 'none';
+  document.getElementById('scene').style.display = 'block';
+  document.getElementById('controls').style.display = 'flex';
+  updateCard();
+  updateScore();
+}
+
+function updateCard() {
+  if (current >= deck.length) {
+    showComplete();
+    return;
+  }
+  const c = deck[current];
+  document.getElementById('cardTerm').textContent = c.term;
+  document.getElementById('cardDef').textContent = c.def;
+  document.getElementById('categoryBadge').textContent = c.category;
+  document.getElementById('card').classList.remove('flipped');
+  isFlipped = false;
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = deck.length;
+  const done = current;
+  const pct = total > 0 ? (done / total) * 100 : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = done + ' / ' + total;
+}
+
+function updateScore() {
+  document.getElementById('scoreKnow').textContent = knowCount;
+  document.getElementById('scoreAgain').textContent = againCount;
+  document.getElementById('scoreLeft').textContent = Math.max(0, deck.length - current);
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('card').classList.toggle('flipped', isFlipped);
+}
+
+function markCard(knew) {
+  if (current >= deck.length) return;
+  if (knew) {
+    knowCount++;
+  } else {
+    againCount++;
+    missedCards.push(deck[current]);
+  }
+  current++;
+  updateScore();
+  updateCard();
+}
+
+function shuffleAll() {
+  const remaining = deck.slice(current);
+  shuffle(remaining);
+  deck = deck.slice(0, current).concat(remaining);
+  updateCard();
+}
+
+function resetAll() {
+  init(shuffle([...ALL_CARDS]));
+}
+
+function restartWrong() {
+  if (missedCards.length === 0) {
+    resetAll();
+    return;
+  }
+  init(shuffle([...missedCards]));
+}
+
+function showComplete() {
+  document.getElementById('scene').style.display = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('categoryBadge').textContent = 'Done';
+  const pct = Math.round((knowCount / (knowCount + againCount)) * 100) || 0;
+  document.getElementById('finalScore').textContent =
+    knowCount + ' correct · ' + againCount + ' to practice · ' + pct + '% mastered';
+  document.getElementById('completeScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+}
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); flipCard(); }
+  if (e.key === 'ArrowRight') markCard(true);
+  if (e.key === 'ArrowLeft') markCard(false);
+});
+
+// Init on load
+resetAll();
+</script>
+</body>
+</html>
